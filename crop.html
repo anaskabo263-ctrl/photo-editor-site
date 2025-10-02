@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>قص الصور</title>
+
+  <!-- Cropper.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+  <style>
+    body{margin:0;font-family:sans-serif;background:#f8f9fa;direction:rtl;color:#333}
+    header{background:#007bff;color:#fff;padding:14px;text-align:center;font-size:1.3rem}
+    .container{max-width:980px;margin:18px auto;background:#fff;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+    .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .info{background:#f1f9ff;border:1px solid #cce5ff;padding:12px;border-radius:8px;flex:1;min-width:220px}
+    .buttons{text-align:center;margin:12px 0}
+    .btn{background:#007bff;color:#fff;padding:10px 14px;border:none;border-radius:8px;cursor:pointer;margin:6px}
+    .btn:disabled{background:#ccc;cursor:not-allowed}
+    .img-container{text-align:center;margin-top:10px}
+    img#image{max-width:100%;display:block;margin:0 auto;max-height:520px;border-radius:8px}
+    footer{text-align:center;padding:12px;color:#666;margin-top:12px}
+  </style>
+</head>
+<body>
+<header>✂️ أداة قص الصور</header>
+
+<div class="container">
+  <div class="top">
+    <a href="./index.html" style="text-decoration:none;background:#28a745;color:#fff;padding:10px 14px;border-radius:8px">🏠 العودة للرئيسية</a>
+    <div class="info">
+      <strong>طريقة الاستخدام:</strong>
+      <ol style="margin:6px 0;padding-inline-start:18px">
+        <li>اضغط "اختر صورة" لتحميل صورة من جهازك.</li>
+        <li>اضبط إطار القص على الصورة كما تريد.</li>
+        <li>اضغط "قص وتحميل" لحفظ النتيجة.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <label class="btn" for="fileInput">📁 اختر صورة</label>
+    <input id="fileInput" type="file" accept="image/*" style="display:none">
+    <button id="cropBtn" class="btn" disabled>📥 قص وتحميل</button>
+  </div>
+
+  <div class="img-container">
+    <img id="image" src="" alt="قم بتحميل صورة للقص">
+  </div>
+</div>
+
+<footer>© 2025 جميع الحقوق محفوظة</footer>
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const cropBtn = document.getElementById('cropBtn');
+  const image = document.getElementById('image');
+  let cropper;
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')) { alert('اختر ملف صورة فقط'); return; }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      image.src = ev.target.result;
+      if(cropper) cropper.destroy();
+      cropper = new Cropper(image, {
+        aspectRatio: NaN,
+        viewMode: 1,
+        movable: true,
+        zoomable: true,
+        scalable: true,
+        rotatable: true,
+      });
+      cropBtn.disabled = false;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  cropBtn.addEventListener('click', ()=>{
+    if(!cropper) return alert('اختر صورة أولاً');
+    const croppedCanvas = cropper.getCroppedCanvas({ maxWidth:4096, maxHeight:4096 });
+    if(!croppedCanvas) return alert('فشل القص');
+
+    croppedCanvas.toBlob((blob)=>{
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'cropped-image.png';
+      document.body.appendChild(link);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      link.remove();
+    });
+  });
+
+  // منع السحب الافتراضي على الصفحة
+  ['dragenter','dragover','dragleave','drop'].forEach(evt=>window.addEventListener(evt,e=>e.preventDefault()));
+</script>
+</body>
+</html>

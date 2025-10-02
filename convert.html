@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>محول صيغ الصور</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial}
+    body{background:#f6f7f9;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl}
+    .card{width:100%;max-width:900px;background:#fff;padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(10,20,40,0.08)}
+    h1{text-align:center;margin:6px 0 14px}
+    .row{display:grid;grid-template-columns:1fr 320px;gap:16px}
+    @media(max-width:880px){.row{grid-template-columns:1fr}}
+    .left{padding:6px}
+    .drop{border:2px dashed #d0d6df;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#fbfcfe}
+    .drop.drag{border-color:#0b5cff}
+    .preview img{max-width:100%;height:auto;border-radius:8px;display:block;margin:12px auto}
+    label{display:block;margin-bottom:6px;font-size:13px}
+    select,input[type="number"],input[type="file"],textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #dde4ea;box-sizing:border-box}
+    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:#0b5cff;color:#fff;border:none;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .small{font-size:13px;color:#666;margin-top:8px}
+    .link-row{margin-top:14px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔄 محول صيغ الصور</h1>
+    <div class="row">
+      <div class="left">
+        <div id="dropZone" class="drop">
+          اسحب الصورة هنا أو اضغط لاختيار ملف<br>
+          <small class="small">يدعم PNG / JPEG / WEBP (صور GIF المتحركة تتحول لصورة ثابتة)</small>
+          <input id="fileInput" type="file" accept="image/*" style="display:none">
+        </div>
+
+        <div class="controls">
+          <div>
+            <label for="toFormat">تحويل إلى</label>
+            <select id="toFormat">
+              <option value="image/png">PNG</option>
+              <option value="image/jpeg">JPEG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="qualityRange">الجودة (JPEG/WEBP) <span id="qLabel">90%</span></label>
+            <input id="qualityRange" type="range" min="0.1" max="1" step="0.05" value="0.9">
+          </div>
+
+          <div>
+            <label for="widthInput">العرض (px) — اترك 0 للاحتفاظ بالأصل</label>
+            <input id="widthInput" type="number" min="0" value="0">
+          </div>
+
+          <div>
+            <label for="heightInput">الارتفاع (px) — اترك 0 للاحتفاظ بالأصل</label>
+            <input id="heightInput" type="number" min="0" value="0">
+          </div>
+
+          <div style="align-self:end">
+            <label><input id="keepAspect" type="checkbox" checked> الحفاظ على نسبة العرض/الارتفاع</label>
+          </div>
+
+          <div style="align-self:end">
+            <button id="convertBtn" class="btn" disabled>⬇ تحويل وتنزيل</button>
+          </div>
+        </div>
+
+        <p class="small">المعالجة تتم محليًا داخل المتصفح — لا تُرفع الصورة إلى أي خادم.</p>
+
+        <div class="link-row">
+          <a href="./index.html" style="text-decoration:none;color:#0b5cff">🏠 العودة للرئيسية</a> &nbsp; | &nbsp;
+          <a href="./privacy.html" target="_blank" style="text-decoration:none;color:#0b5cff">سياسة الخصوصية</a>
+        </div>
+      </div>
+
+      <div>
+        <div id="previewArea" class="preview"></div>
+        <div id="meta" class="small" style="text-align:left"></div>
+      </div>
+    </div>
+
+    <canvas id="canvas" style="display:none"></canvas>
+  </div>
+
+<script>
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const previewArea = document.getElementById('previewArea');
+  const meta = document.getElementById('meta');
+  const toFormat = document.getElementById('toFormat');
+  const qualityRange = document.getElementById('qualityRange');
+  const qLabel = document.getElementById('qLabel');
+  const widthInput = document.getElementById('widthInput');
+  const heightInput = document.getElementById('heightInput');
+  const keepAspect = document.getElementById('keepAspect');
+  const convertBtn = document.getElementById('convertBtn');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  let image = new Image();
+  let originalName = '';
+  let aspect = 1;
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]); });
+
+  ['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.add('drag')}));
+  ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.remove('drag')}));
+  dropZone.addEventListener('drop', (e)=>{ const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(f) loadFile(f); });
+
+  function loadFile(file){
+    if(!file.type.startsWith('image/')){ alert('اختر ملف صورة فقط'); return; }
+    originalName = file.name.replace(/\.[^/.]+$/, "");
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      image = new Image();
+      image.onload = () => {
+        aspect = image.width / image.height;
+        previewArea.innerHTML = '';
+        image.style.maxWidth = '100%';
+        image.style.borderRadius = '8px';
+        previewArea.appendChild(image);
+        meta.innerHTML = `الاسم: <strong>${originalName}</strong> — الأبعاد: <strong>${image.width}×${image.height}</strong> — النوع: <strong>${file.type || 'غير معروف'}</strong>`;
+        convertBtn.disabled = false;
+        if(parseInt(widthInput.value) === 0) widthInput.value = image.width;
+        if(parseInt(heightInput.value) === 0) heightInput.value = image.height;
+      };
+      image.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  qualityRange.addEventListener('input', ()=> qLabel.textContent = Math.round(qualityRange.value*100) + '%');
+
+  widthInput.addEventListener('input', ()=> {
+    if(keepAspect.checked && image.width) {
+      const w = parseInt(widthInput.value) || 0;
+      if(w>0) heightInput.value = Math.round(w / aspect);
+    }
+  });
+  heightInput.addEventListener('input', ()=> {
+    if(keepAspect.checked && image.height){
+      const h = parseInt(heightInput.value) || 0;
+      if(h>0) widthInput.value = Math.round(h * aspect);
+    }
+  });
+
+  convertBtn.addEventListener('click', ()=>{
+    if(!image.src) return alert('اختر صورة أولاً');
+    const targetMime = toFormat.value;
+    const q = parseFloat(qualityRange.value);
+    let w = parseInt(widthInput.value) || image.width;
+    let h = parseInt(heightInput.value) || image.height;
+    if(!w || !h){ w = image.width; h = image.height; }
+
+    canvas.width = w; canvas.height = h;
+    ctx.clearRect(0,0,w,h);
+    ctx.drawImage(image,0,0,w,h);
+
+    canvas.toBlob((blob)=>{
+      if(!blob) return alert('فشل في إنشاء الملف. حاول تغيير الإعدادات.');
+      const ext = mimeToExt(targetMime);
+      const fileName = `${originalName || 'image'}-converted.${ext}`;
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      link.remove();
+    }, targetMime, q);
+  });
+
+  function mimeToExt(mime){
+    if(mime==='image/png') return 'png';
+    if(mime==='image/jpeg') return 'jpg';
+    if(mime==='image/webp') return 'webp';
+    return 'png';
+  }
+
+  ['dragenter','dragover','dragleave','drop'].forEach(evt=>window.addEventListener(evt,e=>e.preventDefault()));
+</script>
+</body>
+</html>
+

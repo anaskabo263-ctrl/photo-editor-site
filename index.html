@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>موقع تعديل الصور</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body{font-family:sans-serif;background:#f8f9fa;margin:0;padding:0;direction:rtl}
+    header{background:#007bff;color:#fff;padding:16px 12px;text-align:center;font-size:1.4rem}
+    .grid{max-width:1000px;margin:28px auto;display:grid;gap:18px;padding:18px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .card{background:#fff;border-radius:12px;padding:24px;text-align:center;text-decoration:none;color:inherit;box-shadow:0 6px 20px rgba(0,0,0,0.06);transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .card i{font-size:2.1rem;color:#007bff;margin-bottom:10px}
+    .card h3{margin:0;font-size:1.05rem;color:#007bff}
+    .card p{margin:8px 0 0;color:#444;font-size:14px}
+    .card:hover{transform:translateY(-6px);box-shadow:0 10px 28px rgba(0,0,0,0.12);background:#f0f8ff}
+    footer{padding:12px;text-align:center;color:#666;background:#fff;margin-top:18px}
+    @media(max-width:480px){header{font-size:1.1rem}}
+  </style>
+</head>
+<body>
+  <header>📸 موقع تعديل وتحويل الصور</header>
+
+  <div class="grid">
+    <a class="card" href="./resize.html">
+      <i class="fa-solid fa-expand"></i>
+      <h3>تعديل أبعاد الصور</h3>
+      <p>قص، تغيير الحجم وحفظ الجودة المطلوبة</p>
+    </a>
+
+    <a class="card" href="./convert.html">
+      <i class="fa-solid fa-arrows-rotate"></i>
+      <h3>تحويل صيغة الصور</h3>
+      <p>حوّل بين PNG / JPEG / WEBP محليًا في المتصفح</p>
+    </a>
+
+    <a class="card" href="./crop.html">
+      <i class="fa-solid fa-crop"></i>
+      <h3>قص الصور</h3>
+      <p>أداة قص تفاعلية باستخدام Cropper.js</p>
+    </a>
+
+    <a class="card" href="./features.html">
+      <i class="fa-solid fa-star"></i>
+      <h3>مميزات الموقع</h3>
+      <p>سرعة، خصوصية، واجهة عربية سهلة</p>
+    </a>
+  </div>
+
+  <footer>© 2025 جميع الحقوق محفوظة</footer>
+</body>
+</html>
