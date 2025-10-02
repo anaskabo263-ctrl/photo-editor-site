@@ -15,6 +15,8 @@
     .card p{margin:8px 0 0;color:#444;font-size:14px}
     .card:hover{transform:translateY(-6px);box-shadow:0 10px 28px rgba(0,0,0,0.12);background:#f0f8ff}
     footer{padding:12px;text-align:center;color:#666;background:#fff;margin-top:18px}
+    footer a{color:#007bff;text-decoration:none;margin-right:6px}
+    footer a:hover{text-decoration:underline}
     @media(max-width:480px){header{font-size:1.1rem}}
   </style>
 </head>
@@ -22,8 +24,9 @@
   <header>📸 موقع تعديل وتحويل الصور</header>
 
   <div class="grid">
+    <!-- تم تبديل الأيقونة هنا إلى fa-crop -->
     <a class="card" href="./resize.html">
-      <i class="fa-solid fa-expand"></i>
+      <i class="fa-solid fa-crop"></i>
       <h3>تعديل أبعاد الصور</h3>
       <p>قص، تغيير الحجم وحفظ الجودة المطلوبة</p>
     </a>
@@ -34,8 +37,9 @@
       <p>حوّل بين PNG / JPEG / WEBP محليًا في المتصفح</p>
     </a>
 
+    <!-- تم تبديل الأيقونة هنا إلى fa-expand -->
     <a class="card" href="./crop.html">
-      <i class="fa-solid fa-crop"></i>
+      <i class="fa-solid fa-expand"></i>
       <h3>قص الصور</h3>
       <p>أداة قص تفاعلية باستخدام Cropper.js</p>
     </a>
@@ -47,6 +51,9 @@
     </a>
   </div>
 
-  <footer>© 2025 جميع الحقوق محفوظة</footer>
+  <footer>
+    © 2025 جميع الحقوق محفوظة |
+    <a href="privacy.html">سياسة الخصوصية</a>
+  </footer>
 </body>
 </html>
