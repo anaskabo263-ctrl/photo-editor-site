@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- الصفحة الرئيسية -->
+  <url>
+    <loc>https://anaskabo263-ctrl.github.io/photo-editor-site/</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- تغيير حجم الصور -->
+  <url>
+    <loc>https://anaskabo263-ctrl.github.io/photo-editor-site/resize.html</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- قص الصور -->
+  <url>
+    <loc>https://anaskabo263-ctrl.github.io/photo-editor-site/crop.html</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- تحويل الصور -->
+  <url>
+    <loc>https://anaskabo263-ctrl.github.io/photo-editor-site/convert.html</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- المميزات -->
+  <url>
+    <loc>https://anaskabo263-ctrl.github.io/photo-editor-site/features.html</loc>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- سياسة الخصوصية -->
+  <url>
+    <loc>https://anaskabo263-ctrl.github.io/photo-editor-site/privacy.html</loc>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>
