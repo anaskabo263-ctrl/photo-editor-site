@@ -21,6 +21,7 @@
     .links{margin-top:14px;text-align:center}
     a.nav{display:inline-block;margin:6px;padding:8px 12px;border:1px solid #0b5cff;color:#0b5cff;border-radius:8px;text-decoration:none}
     .small{font-size:13px;color:#666;margin-top:8px;text-align:center}
+    footer{text-align:center;padding:12px;margin-top:18px;color:#666}
     @media(max-width:620px){.controls{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}
   </style>
 </head>
@@ -74,10 +75,11 @@
       <a class="nav" href="./convert.html">🔄 تحويل صيغة</a>
       <a class="nav" href="./crop.html">✂ قص</a>
       <a class="nav" href="./features.html">⭐ مميزات</a>
+      <a class="nav" href="./privacy.html">🔒 سياسة الخصوصية</a>
     </div>
-
-    <canvas id="canvas" style="display:none"></canvas>
   </div>
+
+  <footer>© 2025 جميع الحقوق محفوظة</footer>
 
 <script>
   const dropZone = document.getElementById('dropZone');
@@ -102,8 +104,8 @@
   dropZone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', (e) => { if(e.target.files[0]) loadImage(e.target.files[0]); });
 
-  ;['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.add('drag')}));
-  ;['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.remove('drag')}));
+  ['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.add('drag')}));
+  ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.remove('drag')}));
   dropZone.addEventListener('drop',(e)=>{ if(e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]); });
 
   function loadImage(file){
@@ -167,10 +169,10 @@
     widthInput.value = 800; heightInput.value = 600; qualityRange.value = 0.9; qualityLabel.textContent='90%';
   });
 
-  // منع السحب على الصفحة بالكامل من فتح الملف مباشرة
   ['dragenter','dragover','dragleave','drop'].forEach(evt=>{
     window.addEventListener(evt, e=>{ e.preventDefault(); });
   });
 </script>
 </body>
 </html>
+
