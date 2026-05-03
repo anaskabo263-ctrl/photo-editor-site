@@ -3,35 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>تعديل أبعاد الصور</title>
+  <title>تعديل أبعاد الصور والتحويل إلى PDF</title>
+  
+  <!-- استدعاء مكتبة jsPDF الضرورية للتحويل -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body{font-family:sans-serif;background:#f8f9fa;margin:0;padding:18px;direction:rtl}
     .card{max-width:900px;margin:12px auto;background:#fff;padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(10,20,40,0.06)}
-    h1{text-align:center;margin:6px 0 16px}
+    h1{text-align:center;margin:6px 0 16px; color: #0b5cff;}
     .drop{border:2px dashed #d8dee6;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#fbfcfe}
-    .drop.drag{border-color:#007bff}
+    .drop.drag{border-color:#0b5cff}
     .preview img{max-width:100%;height:auto;border-radius:8px;display:block;margin:12px auto}
     .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
-    label{display:block;margin-bottom:6px;font-size:13px}
+    label{display:block;margin-bottom:6px;font-size:13px; font-weight: bold;}
     input,select{width:100%;padding:8px;border-radius:8px;border:1px solid #dde4ea;box-sizing:border-box}
     .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:center}
-    .btn{padding:10px 14px;border-radius:8px;background:#0b5cff;color:#fff;border:none;cursor:pointer}
+    .btn{padding:10px 14px;border-radius:8px;background:#0b5cff;color:#fff;border:none;cursor:pointer; font-weight: bold;}
     .btn:disabled{opacity:.6;cursor:not-allowed}
-    .links{margin-top:14px;text-align:center}
-    a.nav{display:inline-block;margin:6px;padding:8px 12px;border:1px solid #0b5cff;color:#0b5cff;border-radius:8px;text-decoration:none}
     .small{font-size:13px;color:#666;margin-top:8px;text-align:center}
     footer{text-align:center;padding:12px;margin-top:18px;color:#666}
-    @media(max-width:620px){.controls{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>🖼️ تعديل أبعاد الصورة</h1>
+    <h1>🖼️ تعديل الأبعاد والتحويل لـ PDF</h1>
 
     <div id="dropZone" class="drop">
       اسحب صورة هنا أو اضغط لاختيار ملف<br>
-      <small class="small">يدعم PNG / JPEG / WEBP — المعالجة محليًا على جهازك</small>
+      <small class="small">يدعم PNG / JPEG / WEBP والآن PDF</small>
       <input id="fileInput" type="file" accept="image/*" style="display:none">
     </div>
 
@@ -47,11 +48,12 @@
         <input id="heightInput" type="number" value="600" min="1">
       </div>
       <div>
-        <label><input id="keepAspect" type="checkbox" checked> حفظ نسبة العرض/الارتفاع</label>
+        <label><input id="keepAspect" type="checkbox" checked> حفظ التناسب</label>
       </div>
       <div>
-        <label for="formatSelect">الصيغة</label>
+        <label for="formatSelect">صيغة الحفظ</label>
         <select id="formatSelect">
+          <option value="application/pdf">PDF (مستند)</option>
           <option value="image/png">PNG</option>
           <option value="image/jpeg">JPEG</option>
           <option value="image/webp">WEBP</option>
@@ -64,22 +66,14 @@
     </div>
 
     <div class="row">
-      <button id="downloadBtn" class="btn" disabled>⬇ تحميل الصورة</button>
+      <button id="downloadBtn" class="btn" disabled>⬇ تنفيذ وتحميل</button>
       <button id="resetBtn" class="btn" style="background:#6c757d">إعادة تعيين</button>
     </div>
 
     <div id="originalSize" class="small"></div>
-
-    <div class="links">
-      <a class="nav" href="./index.html">🏠 الرئيسية</a>
-      <a class="nav" href="./convert.html">🔄 تحويل صيغة</a>
-      <a class="nav" href="./crop.html">✂ قص</a>
-      <a class="nav" href="./features.html">⭐ مميزات</a>
-      <a class="nav" href="./privacy.html">🔒 سياسة الخصوصية</a>
-    </div>
   </div>
 
-  <footer>© 2025 جميع الحقوق محفوظة</footer>
+  <canvas id="canvas" style="display:none"></canvas>
 
 <script>
   const dropZone = document.getElementById('dropZone');
@@ -92,8 +86,6 @@
   const qualityRange = document.getElementById('qualityRange');
   const qualityLabel = document.getElementById('qualityLabel');
   const downloadBtn = document.getElementById('downloadBtn');
-  const resetBtn = document.getElementById('resetBtn');
-  const originalSize = document.getElementById('originalSize');
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
 
@@ -101,15 +93,10 @@
   let aspectRatio = 1;
   let originalName = 'image';
 
-  dropZone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', (e) => { if(e.target.files[0]) loadImage(e.target.files[0]); });
-
-  ['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.add('drag')}));
-  ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,(e)=>{e.preventDefault();dropZone.classList.remove('drag')}));
-  dropZone.addEventListener('drop',(e)=>{ if(e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]); });
+  dropZone.onclick = () => fileInput.click();
+  fileInput.onchange = (e) => { if(e.target.files[0]) loadImage(e.target.files[0]); };
 
   function loadImage(file){
-    if(!file.type.startsWith('image/')){ alert('اختر ملف صورة فقط'); return; }
     originalName = file.name.replace(/\.[^/.]+$/, "");
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -118,11 +105,8 @@
         aspectRatio = img.width / img.height;
         widthInput.value = img.width;
         heightInput.value = img.height;
-        preview.innerHTML = '';
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '8px';
-        preview.appendChild(img);
-        originalSize.textContent = `الأبعاد الأصلية: ${img.width} × ${img.height}`;
+        preview.innerHTML = `<img src="${img.src}" style="max-width:100%; border-radius:8px;">`;
+        document.getElementById('originalSize').textContent = `الأبعاد الأصلية: ${img.width} × ${img.height}`;
         downloadBtn.disabled = false;
       };
       img.src = ev.target.result;
@@ -130,49 +114,39 @@
     reader.readAsDataURL(file);
   }
 
-  widthInput.addEventListener('input', () => {
-    if (keepAspect.checked && img && img.width) heightInput.value = Math.round(widthInput.value / aspectRatio);
-  });
-  heightInput.addEventListener('input', () => {
-    if (keepAspect.checked && img && img.height) widthInput.value = Math.round(heightInput.value * aspectRatio);
-  });
-
-  qualityRange.addEventListener('input', () => { qualityLabel.textContent = Math.round(qualityRange.value * 100) + '%'; });
+  widthInput.oninput = () => { if (keepAspect.checked) heightInput.value = Math.round(widthInput.value / aspectRatio); };
+  heightInput.oninput = () => { if (keepAspect.checked) widthInput.value = Math.round(heightInput.value * aspectRatio); };
+  qualityRange.oninput = () => { qualityLabel.textContent = Math.round(qualityRange.value * 100) + '%'; };
 
   downloadBtn.addEventListener('click', () => {
-    if(!img.src) return alert('اختر صورة أولاً');
-    const w = Math.max(1, parseInt(widthInput.value));
-    const h = Math.max(1, parseInt(heightInput.value));
+    const w = parseInt(widthInput.value);
+    const h = parseInt(heightInput.value);
     const mime = formatSelect.value;
     const q = parseFloat(qualityRange.value);
 
     canvas.width = w; canvas.height = h;
-    ctx.clearRect(0,0,w,h);
-    ctx.drawImage(img,0,0,w,h);
+    ctx.drawImage(img, 0, 0, w, h);
 
-    canvas.toBlob((blob) => {
-      if(!blob){ alert('فشل في إنشاء الصورة'); return; }
-      const ext = mime.split('/')[1].replace('jpeg','jpg');
-      const name = `${originalName || 'image'}-resized.${ext}`;
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(a.href);
-      a.remove();
-    }, mime, q);
+    if (mime === 'application/pdf') {
+      const { jsPDF } = window.jspdf;
+      // تحديد اتجاه الصفحة تلقائياً
+      const orientation = w > h ? 'l' : 'p';
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'px',
+        format: [w, h]
+      });
+      pdf.addImage(canvas.toDataURL('image/jpeg', q), 'JPEG', 0, 0, w, h);
+      pdf.save(`${originalName}.pdf`);
+    } else {
+      const link = document.createElement('a');
+      link.download = `${originalName}-resized.${mime.split('/')[1]}`;
+      link.href = canvas.toDataURL(mime, q);
+      link.click();
+    }
   });
 
-  resetBtn.addEventListener('click', () => {
-    preview.innerHTML = ''; fileInput.value = ''; originalSize.textContent = ''; downloadBtn.disabled = true;
-    widthInput.value = 800; heightInput.value = 600; qualityRange.value = 0.9; qualityLabel.textContent='90%';
-  });
-
-  ['dragenter','dragover','dragleave','drop'].forEach(evt=>{
-    window.addEventListener(evt, e=>{ e.preventDefault(); });
-  });
+  document.getElementById('resetBtn').onclick = () => location.reload();
 </script>
 </body>
 </html>
-
