@@ -3,7 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>محول صيغ الصور</title>
+  <title>محول صيغ الصور إلى PDF</title>
+
+  <!-- استدعاء مكتبة jsPDF للتحويل -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-CECGX11WVH"></script>
@@ -11,7 +14,6 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-CECGX11WVH');
   </script>
 
@@ -23,13 +25,13 @@
     .row{display:grid;grid-template-columns:1fr 320px;gap:16px}
     @media(max-width:880px){.row{grid-template-columns:1fr}}
     .left{padding:6px}
-    .drop{border:2px dashed #d0d6df;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#fbfcfe}
-    .drop.drag{border-color:#0b5cff}
-    .preview img{max-width:100%;height:auto;border-radius:8px;display:block;margin:12px auto}
-    label{display:block;margin-bottom:6px;font-size:13px}
+    .drop{border:2px dashed #0b5cff;border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:#fbfcfe}
+    .drop.drag{border-color:#0b5cff; background:#eef4ff;}
+    .preview img{max-width:100%;height:auto;border-radius:8px;display:block;margin:12px auto;box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    label{display:block;margin-bottom:6px;font-size:13px; font-weight: bold;}
     select,input[type="number"],input[type="file"],textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #dde4ea;box-sizing:border-box}
     .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
-    .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:#0b5cff;color:#fff;border:none;cursor:pointer}
+    .btn{display:inline-block;padding:10px 14px;border-radius:8px;background:#0b5cff;color:#fff;border:none;cursor:pointer; font-weight: bold;}
     .btn:disabled{opacity:.6;cursor:not-allowed}
     .small{font-size:13px;color:#666;margin-top:8px}
     .link-row{margin-top:14px;text-align:center}
@@ -37,12 +39,12 @@
 </head>
 <body>
   <div class="card">
-    <h1>🔄 محول صيغ الصور</h1>
+    <h1>🔄 محول الصور و PDF</h1>
     <div class="row">
       <div class="left">
         <div id="dropZone" class="drop">
           اسحب الصورة هنا أو اضغط لاختيار ملف<br>
-          <small class="small">يدعم PNG / JPEG / WEBP (صور GIF المتحركة تتحول لصورة ثابتة)</small>
+          <small class="small">يدعم PNG / JPEG / WEBP وتحويلها إلى PDF</small>
           <input id="fileInput" type="file" accept="image/*" style="display:none">
         </div>
 
@@ -50,6 +52,7 @@
           <div>
             <label for="toFormat">تحويل إلى</label>
             <select id="toFormat">
+              <option value="application/pdf">PDF (مستند)</option>
               <option value="image/png">PNG</option>
               <option value="image/jpeg">JPEG</option>
               <option value="image/webp">WEBP</option>
@@ -57,40 +60,40 @@
           </div>
 
           <div>
-            <label for="qualityRange">الجودة (JPEG/WEBP) <span id="qLabel">90%</span></label>
+            <label for="qualityRange">الجودة <span id="qLabel">90%</span></label>
             <input id="qualityRange" type="range" min="0.1" max="1" step="0.05" value="0.9">
           </div>
 
           <div>
-            <label for="widthInput">العرض (px) — اترك 0 للاحتفاظ بالأصل</label>
+            <label for="widthInput">العرض (px)</label>
             <input id="widthInput" type="number" min="0" value="0">
           </div>
 
           <div>
-            <label for="heightInput">الارتفاع (px) — اترك 0 للاحتفاظ بالأصل</label>
+            <label for="heightInput">الارتفاع (px)</label>
             <input id="heightInput" type="number" min="0" value="0">
           </div>
 
           <div style="align-self:end">
-            <label><input id="keepAspect" type="checkbox" checked> الحفاظ على نسبة العرض/الارتفاع</label>
+            <label><input id="keepAspect" type="checkbox" checked> الحفاظ على الأبعاد</label>
           </div>
 
           <div style="align-self:end">
-            <button id="convertBtn" class="btn" disabled>⬇ تحويل وتنزيل</button>
+            <button id="convertBtn" class="btn" disabled>⬇ تحويل وتحميل</button>
           </div>
         </div>
 
-        <p class="small">المعالجة تتم محليًا داخل المتصفح — لا تُرفع الصورة إلى أي خادم.</p>
+        <p class="small">المعالجة تتم محليًا داخل المتصفح لضمان خصوصيتك.</p>
 
         <div class="link-row">
-          <a href="./index.html" style="text-decoration:none;color:#0b5cff">🏠 العودة للرئيسية</a> &nbsp; | &nbsp;
-          <a href="./privacy.html" target="_blank" style="text-decoration:none;color:#0b5cff">سياسة الخصوصية</a>
+          <a href="./index.html" style="text-decoration:none;color:#0b5cff">🏠 الرئيسية</a> &nbsp; | &nbsp;
+          <a href="./privacy.html" target="_blank" style="text-decoration:none;color:#0b5cff">الخصوصية</a>
         </div>
       </div>
 
       <div>
         <div id="previewArea" class="preview"></div>
-        <div id="meta" class="small" style="text-align:left"></div>
+        <div id="meta" class="small" style="text-align:right"></div>
       </div>
     </div>
 
@@ -133,9 +136,8 @@
         aspect = image.width / image.height;
         previewArea.innerHTML = '';
         image.style.maxWidth = '100%';
-        image.style.borderRadius = '8px';
         previewArea.appendChild(image);
-        meta.innerHTML = `الاسم: <strong>${originalName}</strong> — الأبعاد: <strong>${image.width}×${image.height}</strong> — النوع: <strong>${file.type || 'غير معروف'}</strong>`;
+        meta.innerHTML = `الأبعاد: <strong>${image.width}×${image.height}</strong>`;
         convertBtn.disabled = false;
         if(parseInt(widthInput.value) === 0) widthInput.value = image.width;
         if(parseInt(heightInput.value) === 0) heightInput.value = image.height;
@@ -166,24 +168,31 @@
     const q = parseFloat(qualityRange.value);
     let w = parseInt(widthInput.value) || image.width;
     let h = parseInt(heightInput.value) || image.height;
-    if(!w || !h){ w = image.width; h = image.height; }
 
     canvas.width = w; canvas.height = h;
     ctx.clearRect(0,0,w,h);
     ctx.drawImage(image,0,0,w,h);
 
-    canvas.toBlob((blob)=>{
-      if(!blob) return alert('فشل في إنشاء الملف. حاول تغيير الإعدادات.');
-      const ext = mimeToExt(targetMime);
-      const fileName = `${originalName || 'image'}-converted.${ext}`;
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      URL.revokeObjectURL(link.href);
-      link.remove();
-    }, targetMime, q);
+    if (targetMime === 'application/pdf') {
+      const { jsPDF } = window.jspdf;
+      const orientation = w > h ? 'l' : 'p';
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'px',
+        format: [w, h]
+      });
+      pdf.addImage(canvas.toDataURL('image/jpeg', q), 'JPEG', 0, 0, w, h);
+      pdf.save(`${originalName}.pdf`);
+    } else {
+      canvas.toBlob((blob)=>{
+        if(!blob) return alert('فشل التحويل');
+        const ext = mimeToExt(targetMime);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${originalName}-converted.${ext}`;
+        link.click();
+      }, targetMime, q);
+    }
   });
 
   function mimeToExt(mime){
@@ -192,8 +201,6 @@
     if(mime==='image/webp') return 'webp';
     return 'png';
   }
-
-  ['dragenter','dragover','dragleave','drop'].forEach(evt=>window.addEventListener(evt,e=>e.preventDefault()));
 </script>
 </body>
 </html>
