@@ -1,146 +1,188 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>محول الصور الشامل إلى PDF</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>محول الصور الشامل إلى PDF</title>
 
-  <!-- استدعاء مكتبة jsPDF للتحويل - تأكد من الاتصال بالإنترنت لتحميلها -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-    body{background:#f6f7f9;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl}
-    .card{width:100%;max-width:900px;background:#fff;padding:25px;border-radius:15px;box-shadow:0 6px 18px rgba(0,0,0,0.1)}
-    h1{text-align:center;color:#0b5cff;margin-bottom:20px}
-    .row{display:grid;grid-template-columns:1fr 320px;gap:20px}
-    @media(max-width:880px){.row{grid-template-columns:1fr}}
-    .drop{border:2px dashed #0b5cff;border-radius:10px;padding:30px;text-align:center;cursor:pointer;background:#fbfcfe;transition:0.3s}
-    .drop:hover{background:#eef4ff}
-    .preview img{max-width:100%;height:auto;border-radius:8px;display:block;margin:15px auto;box-shadow: 0 4px 12px rgba(0,0,0,0.1)}
-    label{display:block;margin-bottom:6px;font-size:13px;font-weight:bold;color:#444}
-    select,input[type="number"]{width:100%;padding:10px;border-radius:8px;border:1px solid #dde4ea;outline:none}
-    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:15px;margin-top:20px}
-    .btn{width:100%;padding:15px;border-radius:10px;background:#0b5cff;color:#fff;border:none;cursor:pointer;font-weight:bold;font-size:16px}
-    .btn:disabled{background:#ccc;cursor:not-allowed}
-    .small{font-size:12px;color:#777;margin-top:10px;text-align:center}
-  </style>
+    <style>
+        :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+        body { background: #f6f7f9; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { width: 100%; max-width: 900px; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #0b5cff; margin-bottom: 20px; }
+        .row { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        @media(max-width: 880px) { .row { grid-template-columns: 1fr; } }
+        
+        .drop { 
+            border: 2px dashed #0b5cff; 
+            border-radius: 10px; 
+            padding: 30px; 
+            text-align: center; 
+            cursor: pointer; 
+            background: #fbfcfe; 
+            transition: 0.3s; 
+        }
+        .drop.highlight { background: #eef4ff; border-color: #0044cc; }
+        .drop:hover { background: #eef4ff; }
+        
+        .preview img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 15px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; color: #444; }
+        select, input[type="number"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #dde4ea; outline: none; box-sizing: border-box; }
+        
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; background: #0b5cff; color: #fff; border: none; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
+        .btn:hover { background: #0044cc; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .small { font-size: 12px; color: #777; margin-top: 10px; text-align: center; }
+        #meta { margin-top: 10px; font-weight: bold; color: #333; }
+    </style>
 </head>
 <body>
-  <div class="card">
+
+<div class="card">
     <h1>📄 محول الصور إلى PDF</h1>
+    
     <div class="row">
-      <div class="left">
-        <div id="dropZone" class="drop">
-          اسحب الصورة هنا أو اضغط لاختيار ملف
-          <input id="fileInput" type="file" accept="image/*" style="display:none">
+        <div class="left">
+            <div id="dropZone" class="drop">
+                اسحب الصورة هنا أو اضغط لاختيار ملف
+                <input id="fileInput" type="file" accept="image/*" style="display:none">
+            </div>
+
+            <div class="controls">
+                <div>
+                    <label>صيغة التحويل</label>
+                    <select id="toFormat">
+                        <option value="application/pdf">PDF (مستند)</option>
+                        <option value="image/png">PNG (صورة)</option>
+                        <option value="image/jpeg">JPEG (صورة)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>الجودة: <span id="qLabel">90%</span></label>
+                    <input id="qualityRange" type="range" min="0.1" max="1" step="0.05" value="0.9">
+                </div>
+                <div>
+                    <label>العرض (px)</label>
+                    <input id="widthInput" type="number" value="0">
+                </div>
+                <div>
+                    <label>الارتفاع (px)</label>
+                    <input id="heightInput" type="number" value="0">
+                </div>
+            </div>
+            
+            <button id="convertBtn" class="btn" style="margin-top:20px" disabled>تحويل وتحميل الآن</button>
+            <p class="small">جميع العمليات تتم داخل متصفحك (خصوصية تامة).</p>
         </div>
 
-        <div class="controls">
-          <div>
-            <label>صيغة التحويل</label>
-            <select id="toFormat">
-              <option value="application/pdf">PDF (مستند)</option>
-              <option value="image/png">PNG</option>
-              <option value="image/jpeg">JPEG</option>
-            </select>
-          </div>
-          <div>
-            <label>الجودة: <span id="qLabel">90%</span></label>
-            <input id="qualityRange" type="range" min="0.1" max="1" step="0.05" value="0.9">
-          </div>
-          <div>
-            <label>العرض (px)</label>
-            <input id="widthInput" type="number" value="0">
-          </div>
-          <div>
-            <label>الارتفاع (px)</label>
-            <input id="heightInput" type="number" value="0">
-          </div>
+        <div class="right">
+            <div id="previewArea" class="preview">
+                 <p style="text-align:center;color:#ccc;margin-top:50px">المعاينة تظهر هنا</p>
+            </div>
+            <div id="meta" class="small"></div>
         </div>
-        
-        <button id="convertBtn" class="btn" style="margin-top:20px" disabled>تحويل وتحميل الآن</button>
-        <p class="small">جميع العمليات تتم داخل متصفحك (خصوصية تامة).</p>
-      </div>
-
-      <div class="right">
-        <div id="previewArea" class="preview">
-             <p style="text-align:center;color:#ccc;margin-top:50px">المعاينة تظهر هنا</p>
-        </div>
-        <div id="meta" class="small"></div>
-      </div>
     </div>
-  </div>
+</div>
 
 <canvas id="canvas" style="display:none"></canvas>
 
 <script>
-  const { jsPDF } = window.jspdf; // تهيئة المكتبة
-  const fileInput = document.getElementById('fileInput');
-  const dropZone = document.getElementById('dropZone');
-  const convertBtn = document.getElementById('convertBtn');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
+    const { jsPDF } = window.jspdf;
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const convertBtn = document.getElementById('convertBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const previewArea = document.getElementById('previewArea');
+    const meta = document.getElementById('meta');
 
-  let activeImg = new Image();
-  let fileName = 'document';
+    let activeImg = new Image();
+    let fileName = 'document';
 
-  // فتح اختيار الملف
-  dropZone.onclick = () => fileInput.click();
+    // فتح نافذة اختيار الملف عند الضغط
+    dropZone.onclick = () => fileInput.click();
 
-  fileInput.onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      fileName = file.name.split('.')[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        activeImg.src = event.target.result;
-        activeImg.onload = () => {
-          document.getElementById('previewArea').innerHTML = `<img src="${activeImg.src}">`;
-          document.getElementById('meta').innerText = `الأبعاد: ${activeImg.width}x${activeImg.height}`;
-          document.getElementById('widthInput').value = activeImg.width;
-          document.getElementById('heightInput').value = activeImg.height;
-          convertBtn.disabled = false;
-        };
-      };
-      reader.readAsDataURL(file);
+    // معالجة اختيار الملف
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    // دعم السحب والإفلات
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
-  };
 
-  convertBtn.onclick = () => {
-    const format = document.getElementById('toFormat').value;
-    const quality = parseFloat(document.getElementById('qualityRange').value);
-    const targetW = parseInt(document.getElementById('widthInput').value) || activeImg.width;
-    const targetH = parseInt(document.getElementById('heightInput').value) || activeImg.height;
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        handleFile(file);
+    });
 
-    canvas.width = targetW;
-    canvas.height = targetH;
-    ctx.drawImage(activeImg, 0, 0, targetW, targetH);
-
-    if (format === 'application/pdf') {
-      // منطق تحويل PDF الاحترافي
-      const orientation = targetW > targetH ? 'l' : 'p';
-      const pdf = new jspdf.jsPDF({
-        orientation: orientation,
-        unit: 'px',
-        format: [targetW, targetH]
-      });
-      
-      pdf.addImage(canvas.toDataURL('image/jpeg', quality), 'JPEG', 0, 0, targetW, targetH);
-      pdf.save(`${fileName}.pdf`);
-    } else {
-      // تحويل لصور عادية
-      const link = document.createElement('a');
-      link.download = `${fileName}-converted.${format.split('/')[1]}`;
-      link.href = canvas.toDataURL(format, quality);
-      link.click();
+    function handleFile(file) {
+        if (file && file.type.startsWith('image/')) {
+            fileName = file.name.split('.')[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                activeImg.src = event.target.result;
+                activeImg.onload = () => {
+                    previewArea.innerHTML = `<img src="${activeImg.src}">`;
+                    meta.innerText = `الأبعاد الأصلية: ${activeImg.width}x${activeImg.height} بكسل`;
+                    document.getElementById('widthInput').value = activeImg.width;
+                    document.getElementById('heightInput').value = activeImg.height;
+                    convertBtn.disabled = false;
+                };
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert("يرجى اختيار ملف صورة صحيح.");
+        }
     }
-  };
 
-  // تحديث نص الجودة
-  document.getElementById('qualityRange').oninput = function() {
-    document.getElementById('qLabel').innerText = Math.round(this.value * 100) + '%';
-  };
+    // زر التحويل والتحميل
+    convertBtn.onclick = () => {
+        const format = document.getElementById('toFormat').value;
+        const quality = parseFloat(document.getElementById('qualityRange').value);
+        const targetW = parseInt(document.getElementById('widthInput').value) || activeImg.width;
+        const targetH = parseInt(document.getElementById('heightInput').value) || activeImg.height;
+
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx.drawImage(activeImg, 0, 0, targetW, targetH);
+
+        if (format === 'application/pdf') {
+            // تحديد الاتجاه تلقائياً (أفقي أو عمودي)
+            const orientation = targetW > targetH ? 'l' : 'p';
+            
+            // إنشاء ملف PDF بمقاسات الصورة تماماً
+            const pdf = new jsPDF({
+                orientation: orientation,
+                unit: 'px',
+                format: [targetW, targetH]
+            });
+            
+            const imgData = canvas.toDataURL('image/jpeg', quality);
+            pdf.addImage(imgData, 'JPEG', 0, 0, targetW, targetH);
+            pdf.save(`${fileName}.pdf`);
+        } else {
+            // التحويل لصيغ الصور (PNG/JPEG)
+            const link = document.createElement('a');
+            link.download = `${fileName}-converted.${format.split('/')[1]}`;
+            link.href = canvas.toDataURL(format, quality);
+            link.click();
+        }
+    };
+
+    // تحديث رقم الجودة المعروض
+    document.getElementById('qualityRange').oninput = function() {
+        document.getElementById('qLabel').innerText = Math.round(this.value * 100) + '%';
+    };
 </script>
+
 </body>
 </html>
